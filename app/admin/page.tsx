@@ -4,7 +4,16 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
-import { getEventCapabilities } from '@/src/lib/supabase/events';
+
+function getEventCapabilities(status: string) {
+  return {
+    isPublic: ["Open", "Coming Soon", "Closed", "Completed"].includes(status),
+    canRegister: status === "Open",
+    showPairings: status === "Closed" || status === "Completed",
+    showResults: status === "Completed",
+    isCancelled: false,
+  };
+}
 
 type AppEvent = {
   id: number;
