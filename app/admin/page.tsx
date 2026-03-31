@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { createClient } from "@/src/lib/supabase/client";
 
+// 🔧 Safe helper (replaces missing import)
 function getEventCapabilities(status: string) {
   return {
     isPublic: ["Open", "Coming Soon", "Closed", "Completed"].includes(status),
@@ -27,63 +28,22 @@ type AppEvent = {
   description: string;
 };
 
-type DbEventRow = {
-  id: number;
-  name: string;
-  event_date: string;
-  course: string;
-  format: string | null;
-  status: string | null;
-  registration_text: string | null;
-  description: string | null;
-};
-
-type RegistrationRow = {
-  id: number;
-  event_id: number | null;
-  name: string;
-  email: string;
-  phone: string | null;
-  status: string | null;
-  created_at: string;
-};
-
-type PairingRow = {
-  id: number;
-  event_id: number;
-  tee_time: string;
-  player_name: string;
-  group_number: number | null;
-  created_at: string;
-};
-
-type ResultRow = {
-  id: number;
-  event_id: number;
-  player_name: string;
-  position: number | null;
-  score: string | null;
-  points: number | null;
-  created_at: string;
-};
-
-function formatDate(dateString: string) {
-  const date = new Date(`${dateString}T00:00:00`);
-  return date.toLocaleDateString("en-US", {
-    month: "long",
-    day: "numeric",
-    year: "numeric",
-  });
-}
-
 export default function AdminPage() {
-  const supabase = useMemo(() => createClient(), []);
   const router = useRouter();
 
+  // ✅ Supabase client (SAFE for Vercel build)
+  const [supabase, setSupabase] = useState<ReturnType<typeof createClient> | null>(null);
+
+  useEffect(() => {
+    setSupabase(createClient());
+  }, []);
+
+  // 🔐 Auth + UI state
   const [loading, setLoading] = useState(true);
   const [authorized, setAuthorized] = useState(false);
   const [email, setEmail] = useState("");
 
+  // 📊 Data state
   const [events, setEvents] = useState<AppEvent[]>([]);
   const [eventsLoading, setEventsLoading] = useState(true);
   const [eventsError, setEventsError] = useState("");
@@ -237,6 +197,7 @@ const brand = {
 
   useEffect(() => {
     async function checkAdminAndLoad() {
+      if (!supabase) return;
       const {
         data: { user },
       } = await supabase.auth.getUser();
@@ -278,6 +239,7 @@ const brand = {
   }, [router, supabase]);
 
   async function loadEvents() {
+    if (!supabase) return;
     setEventsLoading(true);
     setEventsError("");
 
@@ -322,6 +284,7 @@ const brand = {
   }
 
   async function loadRegistrations() {
+    if (!supabase) return;
     setRegistrationsLoading(true);
     setRegistrationsError("");
 
@@ -340,6 +303,7 @@ const brand = {
   }
 
   async function loadPairings() {
+    if (!supabase) return;
     setPairingsLoading(true);
     setPairingsError("");
 
@@ -358,6 +322,7 @@ const brand = {
   }
 
   async function loadResults() {
+    if (!supabase) return;
     setResultsLoading(true);
     setResultsError("");
 
@@ -376,6 +341,7 @@ const brand = {
   }
 
   async function handleRegistrationStatusUpdate(
+    if (!supabase) return;
     registrationId: number,
     newStatus: string
   ) {
@@ -393,6 +359,7 @@ const brand = {
   }
 
   async function handlePairingSubmit(e: React.FormEvent) {
+    if (!supabase) return;
     e.preventDefault();
     setPairingMessage("");
 
@@ -426,6 +393,7 @@ const brand = {
   }
 
   async function handleCreateEvent(e: React.FormEvent) {
+    if (!supabase) return;
     e.preventDefault();
     setNewEventMessage("");
 
@@ -466,6 +434,7 @@ const brand = {
   }
 
 function startEditingEvent(event: AppEvent) {
+  if (!supabase) return;
   setEditingEventId(event.id);
   setEditEventName(event.name);
   setEditEventDate(event.rawDate);
@@ -482,6 +451,7 @@ function startEditingEvent(event: AppEvent) {
 }
 
 async function handleUpdateEvent(e: React.FormEvent) {
+  if (!supabase) return;
   e.preventDefault();
   setEditEventMessage("");
 
@@ -521,6 +491,7 @@ async function handleUpdateEvent(e: React.FormEvent) {
 }
 
 async function handleDeleteEvent(eventId: number) {
+  if (!supabase) return;
   const confirmed = window.confirm("Delete this event?");
   if (!confirmed) return;
 
@@ -547,6 +518,7 @@ async function handleDeleteEvent(eventId: number) {
 }
 
 function startEditingPairing(pairing: PairingRow) {
+  if (!supabase) return;
   setEditingPairingId(pairing.id);
   setEditPairingEventId(pairing.event_id);
   setEditPairingTeeTime(pairing.tee_time);
@@ -558,6 +530,7 @@ function startEditingPairing(pairing: PairingRow) {
 }
 
 async function handleUpdatePairing(e: React.FormEvent) {
+  if (!supabase) return;
   e.preventDefault();
   setEditPairingMessage("");
 
@@ -594,6 +567,7 @@ async function handleUpdatePairing(e: React.FormEvent) {
 }
 
 async function handleDeletePairing(pairingId: number) {
+  if (!supabase) return;
   const confirmed = window.confirm("Delete this pairing?");
   if (!confirmed) return;
 
@@ -617,6 +591,7 @@ async function handleDeletePairing(pairingId: number) {
 }
 
 async function handleResultSubmit(e: React.FormEvent) {
+  if (!supabase) return;
     e.preventDefault();
     setResultMessage("");
 
@@ -652,6 +627,7 @@ async function handleResultSubmit(e: React.FormEvent) {
   }
 
   function startEditingResult(result: ResultRow) {
+    if (!supabase) return;
   setEditingResultId(result.id);
   setEditResultEventId(result.event_id);
   setEditResultPlayerName(result.player_name);
@@ -666,6 +642,7 @@ async function handleResultSubmit(e: React.FormEvent) {
 }
 
 async function handleUpdateResult(e: React.FormEvent) {
+  if (!supabase) return;
   e.preventDefault();
   setEditResultMessage("");
 
@@ -703,6 +680,7 @@ async function handleUpdateResult(e: React.FormEvent) {
 }
 
 async function handleDeleteResult(resultId: number) {
+  if (!supabase) return;
   const confirmed = window.confirm("Delete this result?");
   if (!confirmed) return;
 
@@ -727,6 +705,7 @@ async function handleDeleteResult(resultId: number) {
 }
 
   async function handleSignOut() {
+    if (!supabase) return;
     await supabase.auth.signOut();
     router.replace("/login");
   }
